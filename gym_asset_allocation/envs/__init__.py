@@ -1,0 +1,1 @@
+from gym_asset_allocation.envs.asset_allocation_env import AssetAllocationEnv
