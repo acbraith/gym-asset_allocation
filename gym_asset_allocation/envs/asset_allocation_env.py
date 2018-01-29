@@ -13,11 +13,8 @@ class AssetAllocationEnv(gym.Env):
     def __init__(self):
         # prices is a T x n array
         # first indexed by time, then by asset
-        self.price = self._get_price_data()
-
-        self.T = self.price.shape[0] # final time
-        self.n = self.price.shape[1] # number of assets
-
+        self._pull_price_data()
+        
         self._reset()
 
     def _step(self, action):
@@ -32,6 +29,12 @@ class AssetAllocationEnv(gym.Env):
         return observation, reward, episode_over, info
 
     def _reset(self):
+
+        self.price = self._get_price_data()
+
+        self.T = self.price.shape[0] # final time
+        self.n = self.price.shape[1] # number of assets
+
         self.allocation = np.zeros((self.T,self.n)) # fund allocation at time t
         self.holdings = np.zeros((self.T,self.n)) # actual holdings at time t
         self.cash = np.zeros((self.T))
@@ -50,17 +53,18 @@ class AssetAllocationEnv(gym.Env):
     # # # # # # # # # # # # # # # # # # # # 
     # Helper methods
     # # # # # # # # # # # # # # # # # # # # 
-    def _get_price_data(self):
-        # TODO pull data from internet
-        days = 20
+    def _pull_price_data(self):
         assets = ['TSE/9994','TSE/3484']
-        asset_price_lists = []
+        self.asset_price_dfs = []
         for asset in assets:
-            asset_df = quandl.get(asset)
-            # get 1 year from asset_df
+            self.asset_price_dfs += [quandl.get(asset)]
+
+    def _get_price_data(self, days=252):
+        year_asset_prices = []
+        for asset_df in self.asset_price_dfs:
             i_start = np.random.randint(0,len(asset_df)-days)
-            asset_price_lists += [asset_df.Close[i_start:i_start+days]]
-        asset_prices = np.column_stack(asset_price_lists)
+            year_asset_prices += [asset_df.Close[i_start:i_start+days]]
+        asset_prices = np.column_stack(year_asset_prices)
         return asset_prices
 
     def _take_action(self, action):
