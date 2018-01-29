@@ -30,7 +30,7 @@ The reward function has been chosen as it is to avoid the actor being able to in
 
 ## TODO
 
-- [] Work with more than just `close` prices
-- [] Add more assets
-- [] Add transaction costs
-    - Adds some complexity with rebalancing portfolio
+* Work with more than just `close` prices
+* Add more assets
+* Add transaction costs
+    * Adds some complexity with rebalancing portfolio
