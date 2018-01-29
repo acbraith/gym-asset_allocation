@@ -5,6 +5,10 @@ from gym.utils import seeding
 import numpy as np
 import pandas as pd
 import quandl
+import errno
+import os
+import pickle
+import datetime
 
 class AssetAllocationEnv(gym.Env):
     # # # # # # # # # # # # # # # # # # # #
@@ -68,10 +72,25 @@ class AssetAllocationEnv(gym.Env):
     # Helper methods
     # # # # # # # # # # # # # # # # # # # #
     def _pull_price_data(self):
-        assets = ['TSE/9994', 'TSE/3443']
-        self.asset_price_dfs = []
-        for asset in assets:
-            self.asset_price_dfs += [quandl.get(asset)]
+        # cache data for 1 day (because API calls limited to daily cap)
+        directory = 'data/'
+        filename = 'price_data.pkl'
+        try:
+            with open(directory+filename, 'rb') as f:
+                timestamp, self.asset_price_dfs = pickle.load(f)
+                if datetime.datetime.now() - timestamp > datetime.timedelta(days=1):
+                    raise FileNotFoundError(
+                        errno.ENOENT, os.strerror(errno.ENOENT), directory+filename)
+        except FileNotFoundError:
+            if not os.path.exists(directory):
+                os.makedirs(directory)
+            assets = ['TSE/9994', 'TSE/3443']
+            self.asset_price_dfs = []
+            for asset in assets:
+                self.asset_price_dfs += [quandl.get(asset)]
+
+            with open(directory+filename, 'wb') as f:
+                pickle.dump((datetime.datetime.now(), self.asset_price_dfs), f)
 
     def _get_price_data(self, days=252):
         self.np_random.shuffle(self.asset_price_dfs)
