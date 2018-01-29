@@ -13,6 +13,7 @@ class AssetAllocationEnv(gym.Env):
     def __init__(self):
         # prices is a T x n array
         # first indexed by time, then by asset
+        self.cols = ['Open','High','Low','Close','Volume']
         self._pull_price_data()
         n = len(self.asset_price_dfs)
 
@@ -44,8 +45,8 @@ class AssetAllocationEnv(gym.Env):
         # self.price is a dict, keys 'Open','High','Low','Close','Volume'
         self.price = self._get_price_data()
 
-        self.T = self.price['Close'].shape[0] # final time
-        self.n = self.price['Close'].shape[1] # number of assets
+        self.T = self.price['Open'].shape[0] # final time
+        self.n = self.price['Open'].shape[1] # number of assets
 
         # These are all for the START of day t
         self.allocation = np.zeros((self.T, self.n)) # fund allocation
@@ -73,7 +74,8 @@ class AssetAllocationEnv(gym.Env):
             self.asset_price_dfs += [quandl.get(asset)]
 
     def _get_price_data(self, days=252):
-        days = 20
+        self.np_random.shuffle(self.asset_price_dfs)
+
         # get slices of length days from each dataframe
         asset_df_slices = []
         for asset_df in self.asset_price_dfs:
@@ -81,10 +83,10 @@ class AssetAllocationEnv(gym.Env):
                 i_start = self.np_random.randint(0, len(asset_df)-days)
                 asset_df_slice = asset_df.iloc[i_start:i_start+days]
                 asset_df_slices += [asset_df_slice]
-        
+
         # stack these together in to prices
         prices = {}
-        for col in self.asset_price_dfs[0].columns:
+        for col in self.cols:
             prices[col] = np.column_stack([df[col] for df in asset_df_slices])
 
         return prices
@@ -107,7 +109,7 @@ class AssetAllocationEnv(gym.Env):
         self.cash[self.t] = (1-action.sum()) * self.value[self.t]
 
     def _get_observation(self):
-        return np.array([self.price[col][self.t] for col in self.price]).transpose()
+        return np.array([self.price[col][self.t] for col in self.cols]).transpose()
 
     def _get_reward(self):
         return (self.value[self.t] - self.value[self.t-1]) / self.value[self.t-1]
