@@ -26,9 +26,9 @@ The reward given is `(valueₜ - valueₜ₋₁) / valueₜ₋₁`, ie the chang
 
 ## TODO
 
-* Work with more than just `close` prices
 * Try out a baselines agent
 * Add more assets
+    * 'short' for each asset, with price series mimicing the result from shorting the asset?
 * Add transaction costs
     * Adds some complexity with rebalancing portfolio
 * Add more than just `OHLCV` data
