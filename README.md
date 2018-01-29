@@ -16,21 +16,20 @@ The observation at each timestep is a `numpy` array of shape `(n, 5)`, containin
 
 ## Actions
 
-The action given is the relative allocation of funds between each asset. If `Σaᵢ > 1` we normalise `a`. If `Σaᵢ < 1` the remaining funds are put into 'cash', whose value does not change with time. If `aᵢ < 0`, `aᵢ` is treated as `0`.
+The action given is the relative allocation of funds between each asset. Each `0 ≤ aᵢ ≤ 1`, and if `Σaᵢ > 1` we normalise such that `Σaᵢ = 1`. If `Σaᵢ < 1` the remaining funds are put into 'cash', whose value does not change with time.
 
-Rebalancing is done at the start of a day, so assets are bought and sold at the day's `Open` price.
+Rebalancing is done at the start of a day, so assets are bought and sold at the day's `open` price.
 
 ## Rewards
 
-The reward given is `(valueᶜˡᵒˢᵉ - valueᵒᵖᵉⁿ) / valueᵒᵖᵉⁿ` for `open` and `close` prices on the same day.
-
-This potentially leads to the true value of the portfolio not exactly following what would be expected from the rewards, due to the following day's `open` not being equal to previous day's `close`.
-
-The reward function has been chosen as it is to avoid the actor being able to infer some information on the following day's `open` price from it's reward.
+The reward given is `(valueₜ - valueₜ₋₁) / valueₜ₋₁`, ie the change in portfolio value from the start of day `t-1` to the start of day `t`.
 
 ## TODO
 
 * Work with more than just `close` prices
+* Try out a baselines agent
 * Add more assets
 * Add transaction costs
     * Adds some complexity with rebalancing portfolio
+* Add more than just `OHLCV` data
+    * eg some fundamental stuff, technical indicators, whatever
