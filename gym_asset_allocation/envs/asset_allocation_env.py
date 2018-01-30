@@ -17,11 +17,11 @@ class AssetAllocationEnv(gym.Env):
     def __init__(self):
         # prices is a T x n array
         # first indexed by time, then by asset
-        self.cols = ['Open','High','Low','Close','Volume']
+        self.cols = ['Open', 'High', 'Low', 'Close', 'Volume']
         self._pull_price_data()
         n = len(self.asset_price_dfs)
 
-        self.observation_space = spaces.Box(0, np.finfo('d').max, shape=(n,5))
+        self.observation_space = spaces.Box(0, np.finfo('d').max, shape=(n, 5))
         self.action_space = spaces.Box(0, 1, shape=(n))
 
         self._seed()
@@ -34,8 +34,9 @@ class AssetAllocationEnv(gym.Env):
     def _step(self, action):
         assert self.action_space.contains(action), "%r (%s) invalid" % (action, type(action))
 
-        self.t += 1
-        self._take_action(action)
+        if not self._get_over():
+            self.t += 1
+            self._take_action(action)
 
         observation = self._get_observation()
         reward = self._get_reward()
@@ -75,16 +76,16 @@ class AssetAllocationEnv(gym.Env):
         # cache data for 1 day (because API calls limited to daily cap)
         directory = 'data/'
         filename = 'price_data.pkl'
+        assets = ['TSE/9994', 'TSE/3443']
         try:
             with open(directory+filename, 'rb') as f:
                 timestamp, self.asset_price_dfs = pickle.load(f)
-                if datetime.datetime.now() - timestamp > datetime.timedelta(days=1):
+                if datetime.datetime.now().date() != timestamp.date():
                     raise FileNotFoundError(
                         errno.ENOENT, os.strerror(errno.ENOENT), directory+filename)
         except FileNotFoundError:
             if not os.path.exists(directory):
                 os.makedirs(directory)
-            assets = ['TSE/9994', 'TSE/3443']
             self.asset_price_dfs = []
             for asset in assets:
                 self.asset_price_dfs += [quandl.get(asset)]
@@ -134,4 +135,4 @@ class AssetAllocationEnv(gym.Env):
         return (self.value[self.t] - self.value[self.t-1]) / self.value[self.t-1]
 
     def _get_over(self):
-        return self.t >= self.T
+        return self.t+1 >= self.T
